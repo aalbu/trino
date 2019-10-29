@@ -356,7 +356,9 @@ public class HiveMetadata
 
         List<String> partitionedBy = getPartitionedBy(tableMetadata.getProperties());
 
-        partitionValuesList.ifPresent(list -> {
+        if (partitionValuesList.isPresent()) {
+            List<List<String>> list = partitionValuesList.get();
+
             if (partitionedBy.isEmpty()) {
                 throw new PrestoException(INVALID_ANALYZE_PROPERTY, "Partition list provided but table is not partitioned");
             }
@@ -365,13 +367,12 @@ public class HiveMetadata
                     throw new PrestoException(INVALID_ANALYZE_PROPERTY, "Partition value count does not match partition column count");
                 }
             }
-        });
 
-        HiveTableHandle table = handle;
-        return partitionValuesList
-                .map(values -> partitionManager.getPartitions(table, values))
-                .map(result -> partitionManager.applyPartitionResult(table, result))
-                .orElse(table);
+            HivePartitionResult partitions = partitionManager.getPartitions(handle, list);
+            handle = partitionManager.applyPartitionResult(handle, partitions);
+        }
+
+        return handle;
     }
 
     @Override
