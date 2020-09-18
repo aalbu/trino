@@ -8,8 +8,8 @@
         <version>342-SNAPSHOT</version>
     </parent>
 
-    <artifactId>presto-test-jdbc-compatibility</artifactId>
-    <description>Presto - Tests whether older Presto JDBC clients are compatible with current Presto server</description>
+    <artifactId>presto-test-jdbc-compatibility-old-server</artifactId>
+    <description>Presto - Tests whether current Presto JDBC clients are compatible with old Presto servers</description>
 
     <properties>
         <air.main.basedir>${project.parent.basedir}</air.main.basedir>
@@ -20,15 +20,14 @@
         <dependency>
             <groupId>io.prestosql</groupId>
             <artifactId>presto-jdbc</artifactId>
-            <version>${dep.presto-jdbc-under-test}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>io.prestosql</groupId>
             <artifactId>presto-jdbc</artifactId>
-            <version>${dep.presto-jdbc-under-test}</version>
             <scope>test</scope>
+            <version>${project.version}</version>
             <type>test-jar</type>
         </dependency>
 
@@ -75,9 +74,36 @@
         </dependency>
 
         <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>presto</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <scope>test</scope>
         </dependency>
+
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <suiteXmlFiles>
+                        <suiteXmlFile>testng.xml</suiteXmlFile>
+                    </suiteXmlFiles>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
 </project>
