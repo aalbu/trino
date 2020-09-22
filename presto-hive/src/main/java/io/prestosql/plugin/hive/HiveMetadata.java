@@ -827,7 +827,7 @@ public class HiveMetadata
             throw new PrestoException(NOT_SUPPORTED, "Bucketing/Partitioning columns not supported when Avro schema url is set");
         }
 
-        validateTimestampColumns(tableMetadata.getColumns());
+        validateTimestampColumns(tableMetadata.getColumns(), getTimestampPrecision(session));
         List<HiveColumnHandle> columnHandles = getColumnHandles(tableMetadata, ImmutableSet.copyOf(partitionedBy));
         HiveStorageFormat hiveStorageFormat = getHiveStorageFormat(tableMetadata.getProperties());
         Map<String, String> tableProperties = getEmptyTableProperties(tableMetadata, bucketProperty, new HdfsContext(session, schemaName, tableName));
@@ -1214,7 +1214,7 @@ public class HiveMetadata
         List<String> partitionColumnNames = partitionColumns.stream()
                 .map(Column::getName)
                 .collect(toImmutableList());
-        // TODO: revisit when handling write path
+        // TODO: https://github.com/prestosql/presto/issues/5170
         List<HiveColumnHandle> hiveColumnHandles = hiveColumnHandles(table, typeManager, TimestampType.DEFAULT_PRECISION);
         Map<String, Type> columnTypes = hiveColumnHandles.stream()
                 .filter(columnHandle -> !columnHandle.isHidden())
@@ -2322,7 +2322,7 @@ public class HiveMetadata
     @Override
     public Optional<ConnectorNewTableLayout> getNewTableLayout(ConnectorSession session, ConnectorTableMetadata tableMetadata)
     {
-        validateTimestampColumns(tableMetadata.getColumns());
+        validateTimestampColumns(tableMetadata.getColumns(), getTimestampPrecision(session));
         validatePartitionColumns(tableMetadata);
         validateBucketColumns(tableMetadata);
         validateColumns(tableMetadata);
@@ -2377,11 +2377,12 @@ public class HiveMetadata
 
     private TableStatisticsMetadata getStatisticsCollectionMetadata(List<ColumnMetadata> columns, List<String> partitionedBy, Optional<Set<String>> analyzeColumns, boolean includeRowCount)
     {
-        validateTimestampColumns(columns);
         Set<ColumnStatisticMetadata> columnStatistics = columns.stream()
                 .filter(column -> !partitionedBy.contains(column.getName()))
                 .filter(column -> !column.isHidden())
                 .filter(column -> analyzeColumns.isEmpty() || analyzeColumns.get().contains(column.getName()))
+                // TODO: we only support stats collection at millis precision for now (https://github.com/prestosql/presto/issues/5170)
+                .filter(column -> !(column.getType() instanceof TimestampType) || column.getType() == TIMESTAMP_MILLIS)
                 .map(this::getColumnStatisticMetadata)
                 .flatMap(List::stream)
                 .collect(toImmutableSet());
@@ -2596,13 +2597,13 @@ public class HiveMetadata
     }
 
     // temporary, until variable precision timestamps are supported on write
-    private static void validateTimestampColumns(List<ColumnMetadata> columns)
+    private static void validateTimestampColumns(List<ColumnMetadata> columns, HiveTimestampPrecision timestampPrecision)
     {
         for (ColumnMetadata column : columns) {
             Type type = column.getType();
             if (type instanceof TimestampType) {
-                if (type != TIMESTAMP_MILLIS) {
-                    throw new PrestoException(NOT_SUPPORTED, "CREATE TABLE, INSERT and ANALYZE are not supported with requested timestamp precision: " + type);
+                if (((TimestampType) type).getPrecision() != timestampPrecision.getPrecision()) {
+                    throw new PrestoException(NOT_SUPPORTED, "Incorrect timestamp precision for " + type + "; the configured precision is: " + timestampPrecision);
                 }
             }
         }

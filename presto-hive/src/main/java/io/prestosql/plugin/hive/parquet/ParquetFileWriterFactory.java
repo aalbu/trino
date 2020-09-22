@@ -40,6 +40,7 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import static io.prestosql.plugin.hive.HiveErrorCode.HIVE_WRITER_OPEN_ERROR;
+import static io.prestosql.plugin.hive.HiveSessionProperties.getTimestampPrecision;
 import static io.prestosql.plugin.hive.util.HiveUtil.getColumnNames;
 import static io.prestosql.plugin.hive.util.HiveUtil.getColumnTypes;
 import static java.util.Objects.requireNonNull;
@@ -86,7 +87,7 @@ public class ParquetFileWriterFactory
 
         List<String> fileColumnNames = getColumnNames(schema);
         List<Type> fileColumnTypes = getColumnTypes(schema).stream()
-                .map(hiveType -> hiveType.getType(typeManager))
+                .map(hiveType -> hiveType.getType(typeManager, getTimestampPrecision(session).getPrecision()))
                 .collect(toList());
 
         int[] fileInputColumnIndexes = fileColumnNames.stream()

@@ -22,7 +22,6 @@ import io.prestosql.rcfile.EncodeOutput;
 import io.prestosql.spi.block.Block;
 import io.prestosql.spi.block.BlockBuilder;
 import io.prestosql.spi.type.TimestampType;
-import org.joda.time.format.DateTimeFormat;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -31,8 +30,7 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 
 import static io.prestosql.plugin.base.type.PrestoTimestampEncoderFactory.createTimestampEncoder;
-import static io.prestosql.spi.type.Timestamps.MICROSECONDS_PER_MILLISECOND;
-import static java.lang.Math.floorDiv;
+import static io.prestosql.rcfile.TimestampUtils.getLocalDateTime;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.util.Objects.requireNonNull;
 import static org.joda.time.DateTimeZone.UTC;
@@ -45,9 +43,7 @@ public class TimestampEncoding
             .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
             .optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 1, 9, true).optionalEnd()
             .toFormatter();
-    // TODO: switch to java.time when we implement writes with variable precision
-    private static final org.joda.time.format.DateTimeFormatter HIVE_TIMESTAMP_PRINTER =
-            new org.joda.time.format.DateTimeFormatterBuilder().append(DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSSSSSSS").getPrinter()).toFormatter().withZoneUTC();
+    private static final DateTimeFormatter HIVE_TIMESTAMP_PRINTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSSSS");
 
     private final TimestampType type;
     private final Slice nullSequence;
@@ -69,9 +65,9 @@ public class TimestampEncoding
                 output.writeBytes(nullSequence);
             }
             else {
-                long millis = floorDiv(type.getLong(block, position), MICROSECONDS_PER_MILLISECOND);
+                LocalDateTime localDateTime = getLocalDateTime(type, block, position);
                 buffer.setLength(0);
-                HIVE_TIMESTAMP_PRINTER.printTo(buffer, millis);
+                HIVE_TIMESTAMP_PRINTER.formatTo(localDateTime, buffer);
                 for (int index = 0; index < buffer.length(); index++) {
                     output.writeByte(buffer.charAt(index));
                 }
@@ -83,9 +79,9 @@ public class TimestampEncoding
     @Override
     public void encodeValueInto(int depth, Block block, int position, SliceOutput output)
     {
-        long millis = floorDiv(type.getLong(block, position), MICROSECONDS_PER_MILLISECOND);
+        LocalDateTime localDateTime = getLocalDateTime(type, block, position);
         buffer.setLength(0);
-        HIVE_TIMESTAMP_PRINTER.printTo(buffer, millis);
+        HIVE_TIMESTAMP_PRINTER.formatTo(localDateTime, buffer);
         for (int index = 0; index < buffer.length(); index++) {
             output.writeByte(buffer.charAt(index));
         }

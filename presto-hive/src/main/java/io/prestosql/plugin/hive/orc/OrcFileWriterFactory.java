@@ -61,6 +61,7 @@ import static io.prestosql.plugin.hive.HiveSessionProperties.getOrcOptimizedWrit
 import static io.prestosql.plugin.hive.HiveSessionProperties.getOrcOptimizedWriterMinStripeSize;
 import static io.prestosql.plugin.hive.HiveSessionProperties.getOrcOptimizedWriterValidateMode;
 import static io.prestosql.plugin.hive.HiveSessionProperties.getOrcStringStatisticsLimit;
+import static io.prestosql.plugin.hive.HiveSessionProperties.getTimestampPrecision;
 import static io.prestosql.plugin.hive.HiveSessionProperties.isOrcOptimizedWriterValidate;
 import static io.prestosql.plugin.hive.util.HiveUtil.getColumnNames;
 import static io.prestosql.plugin.hive.util.HiveUtil.getColumnTypes;
@@ -140,7 +141,7 @@ public class OrcFileWriterFactory
         // an index to rearrange columns in the proper order
         List<String> fileColumnNames = getColumnNames(schema);
         List<Type> fileColumnTypes = getColumnTypes(schema).stream()
-                .map(hiveType -> hiveType.getType(typeManager))
+                .map(hiveType -> hiveType.getType(typeManager, getTimestampPrecision(session).getPrecision()))
                 .collect(toList());
 
         int[] fileInputColumnIndexes = fileColumnNames.stream()

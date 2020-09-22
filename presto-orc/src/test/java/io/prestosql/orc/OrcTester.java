@@ -1041,7 +1041,7 @@ public class OrcTester
         }
         if (type.equals(TIMESTAMP_TZ_MILLIS) || type.equals(TIMESTAMP_TZ_MICROS) || type.equals(TIMESTAMP_TZ_NANOS)) {
             SqlTimestampWithTimeZone timestamp = (SqlTimestampWithTimeZone) value;
-            int nanosOfMilli = roundDiv(timestamp.getPicosOfMilli(), PICOSECONDS_PER_NANOSECOND);
+            int nanosOfMilli = toIntExact(roundDiv(timestamp.getPicosOfMilli(), PICOSECONDS_PER_NANOSECOND));
             return Timestamp.ofEpochMilli(timestamp.getEpochMillis(), nanosOfMilli);
         }
         if (type instanceof DecimalType) {

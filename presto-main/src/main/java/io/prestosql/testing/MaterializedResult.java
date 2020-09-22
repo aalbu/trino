@@ -19,9 +19,6 @@ import com.google.common.collect.ImmutableSet;
 import io.airlift.slice.Slices;
 import io.prestosql.Session;
 import io.prestosql.client.Warning;
-import io.prestosql.plugin.base.type.DecodedTimestamp;
-import io.prestosql.plugin.base.type.PrestoTimestampEncoder;
-import io.prestosql.plugin.base.type.PrestoTimestampEncoderFactory;
 import io.prestosql.spi.Page;
 import io.prestosql.spi.PageBuilder;
 import io.prestosql.spi.block.Block;
@@ -30,6 +27,7 @@ import io.prestosql.spi.connector.ConnectorPageSource;
 import io.prestosql.spi.connector.ConnectorSession;
 import io.prestosql.spi.type.ArrayType;
 import io.prestosql.spi.type.CharType;
+import io.prestosql.spi.type.LongTimestamp;
 import io.prestosql.spi.type.MapType;
 import io.prestosql.spi.type.RowType;
 import io.prestosql.spi.type.SqlDate;
@@ -44,7 +42,6 @@ import io.prestosql.spi.type.TimeZoneKey;
 import io.prestosql.spi.type.TimestampType;
 import io.prestosql.spi.type.Type;
 import io.prestosql.spi.type.VarcharType;
-import org.joda.time.DateTimeZone;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -80,16 +77,12 @@ import static io.prestosql.spi.type.IntegerType.INTEGER;
 import static io.prestosql.spi.type.RealType.REAL;
 import static io.prestosql.spi.type.SmallintType.SMALLINT;
 import static io.prestosql.spi.type.TimestampWithTimeZoneType.TIMESTAMP_WITH_TIME_ZONE;
-import static io.prestosql.spi.type.Timestamps.MICROSECONDS_PER_SECOND;
-import static io.prestosql.spi.type.Timestamps.NANOSECONDS_PER_MICROSECOND;
 import static io.prestosql.spi.type.Timestamps.PICOSECONDS_PER_NANOSECOND;
 import static io.prestosql.spi.type.Timestamps.roundDiv;
 import static io.prestosql.spi.type.TinyintType.TINYINT;
 import static io.prestosql.spi.type.VarbinaryType.VARBINARY;
 import static io.prestosql.type.JsonType.JSON;
 import static java.lang.Float.floatToRawIntBits;
-import static java.lang.Math.floorDiv;
-import static java.lang.Math.floorMod;
 import static java.util.Objects.requireNonNull;
 
 public class MaterializedResult
@@ -303,8 +296,13 @@ public class MaterializedResult
             type.writeLong(blockBuilder, packTimeWithTimeZone(nanos, offsetMinutes));
         }
         else if (type instanceof TimestampType) {
-            PrestoTimestampEncoder<? extends Comparable<?>> timestampEncoder = PrestoTimestampEncoderFactory.createTimestampEncoder((TimestampType) type, DateTimeZone.UTC);
-            timestampEncoder.write(toDecodedTimestamp((SqlTimestamp) value), blockBuilder);
+            long micros = ((SqlTimestamp) value).getEpochMicros();
+            if (((TimestampType) type).getPrecision() <= TimestampType.MAX_SHORT_PRECISION) {
+                type.writeLong(blockBuilder, micros);
+            }
+            else {
+                type.writeObject(blockBuilder, new LongTimestamp(micros, ((SqlTimestamp) value).getPicosOfMicros()));
+            }
         }
         else if (TIMESTAMP_WITH_TIME_ZONE.equals(type)) {
             long millisUtc = ((SqlTimestampWithTimeZone) value).getMillisUtc();
@@ -343,13 +341,6 @@ public class MaterializedResult
         else {
             throw new IllegalArgumentException("Unsupported type " + type);
         }
-    }
-
-    private static DecodedTimestamp toDecodedTimestamp(SqlTimestamp sqlTimestamp)
-    {
-        long epochSeconds = floorDiv(sqlTimestamp.getEpochMicros(), MICROSECONDS_PER_SECOND);
-        int nanosOfSecond = floorMod(sqlTimestamp.getEpochMicros(), MICROSECONDS_PER_SECOND) * NANOSECONDS_PER_MICROSECOND + roundDiv(sqlTimestamp.getPicosOfMicros(), PICOSECONDS_PER_NANOSECOND);
-        return new DecodedTimestamp(epochSeconds, nanosOfSecond);
     }
 
     /**
