@@ -4142,13 +4142,10 @@ public class TestHiveIntegrationSmokeTest
     @DataProvider
     public Object[][] timestampPrecisionAndValues()
     {
-        // TODO: revisit values once we handle write path and are able to write with higher precision,
-        //  make sure push-down happens correctly in the presence of rounding;
-        // consider using LocalDateTime instead of String
         return new Object[][] {
                 {HiveTimestampPrecision.MILLISECONDS, "2012-10-31 01:00:08.123"},
-                {HiveTimestampPrecision.MICROSECONDS, "2012-10-31 01:00:08.123000"},
-                {HiveTimestampPrecision.NANOSECONDS, "2012-10-31 01:00:08.123000000"}};
+                {HiveTimestampPrecision.MICROSECONDS, "2012-10-31 01:00:08.123456"},
+                {HiveTimestampPrecision.NANOSECONDS, "2012-10-31 01:00:08.123456789"}};
     }
 
     @Test(dataProvider = "timestampPrecisionAndValues")
@@ -4157,7 +4154,7 @@ public class TestHiveIntegrationSmokeTest
         Session session = withTimestampPrecision(getSession(), timestampPrecision.name());
         assertUpdate("DROP TABLE IF EXISTS test_parquet_timestamp_predicate_pushdown");
         assertUpdate("CREATE TABLE test_parquet_timestamp_predicate_pushdown (t TIMESTAMP) WITH (format = 'PARQUET')");
-        assertUpdate(format("INSERT INTO test_parquet_timestamp_predicate_pushdown VALUES (TIMESTAMP '%s')", value), 1);
+        assertUpdate(session, format("INSERT INTO test_parquet_timestamp_predicate_pushdown VALUES (TIMESTAMP '%s')", value), 1);
         assertQuery(session, "SELECT * FROM test_parquet_timestamp_predicate_pushdown", format("VALUES (TIMESTAMP '%s')", value));
 
         DistributedQueryRunner queryRunner = (DistributedQueryRunner) getQueryRunner();
@@ -4181,6 +4178,42 @@ public class TestHiveIntegrationSmokeTest
             ResultWithQueryId<MaterializedResult> result = queryRunner.executeWithQueryId(
                     session,
                     format("SELECT * FROM test_parquet_timestamp_predicate_pushdown WHERE t = TIMESTAMP '%s'", value));
+            sleeper.sleep();
+            assertThat(getQueryInfo(queryRunner, result).getQueryStats().getProcessedInputDataSize().toBytes()).isGreaterThan(0);
+        });
+    }
+
+    @Test(dataProvider = "timestampPrecisionAndValues")
+    public void testOrcTimestampPredicatePushdown(HiveTimestampPrecision timestampPrecision, String value)
+    {
+        Session session = withTimestampPrecision(getSession(), timestampPrecision.name());
+        assertUpdate("DROP TABLE IF EXISTS test_orc_timestamp_predicate_pushdown");
+        assertUpdate("CREATE TABLE test_orc_timestamp_predicate_pushdown (t TIMESTAMP) WITH (format = 'ORC')");
+        assertUpdate(session, format("INSERT INTO test_orc_timestamp_predicate_pushdown VALUES (TIMESTAMP '%s')", value), 1);
+        assertQuery(session, "SELECT * FROM test_orc_timestamp_predicate_pushdown", format("VALUES (TIMESTAMP '%s')", value));
+
+        DistributedQueryRunner queryRunner = (DistributedQueryRunner) getQueryRunner();
+        ResultWithQueryId<MaterializedResult> queryResult = queryRunner.executeWithQueryId(
+                session,
+                format("SELECT * FROM test_orc_timestamp_predicate_pushdown WHERE t < TIMESTAMP '%s'", value));
+        assertEquals(getQueryInfo(queryRunner, queryResult).getQueryStats().getProcessedInputDataSize().toBytes(), 0);
+
+        queryResult = queryRunner.executeWithQueryId(
+                session,
+                format("SELECT * FROM test_orc_timestamp_predicate_pushdown WHERE t > TIMESTAMP '%s'", value));
+        // the upper bound of the ORC tuple domain is higher than the actual maximum, so there is no pruning for the query above
+        assertTrue(getQueryInfo(queryRunner, queryResult).getQueryStats().getProcessedInputDataSize().toBytes() > 0);
+
+        // TODO: replace this with a simple query stats check once we find a way to wait until all pending updates to query stats have been applied
+        ExponentialSleeper sleeper = new ExponentialSleeper(
+                new Duration(0, SECONDS),
+                new Duration(5, SECONDS),
+                new Duration(100, MILLISECONDS),
+                2.0);
+        assertEventually(new Duration(30, SECONDS), () -> {
+            ResultWithQueryId<MaterializedResult> result = queryRunner.executeWithQueryId(
+                    session,
+                    format("SELECT * FROM test_orc_timestamp_predicate_pushdown WHERE t = TIMESTAMP '%s'", value));
             sleeper.sleep();
             assertThat(getQueryInfo(queryRunner, result).getQueryStats().getProcessedInputDataSize().toBytes()).isGreaterThan(0);
         });
@@ -7238,6 +7271,8 @@ public class TestHiveIntegrationSmokeTest
     {
         return Session.builder(session)
                 .setCatalogSessionProperty(catalog, "timestamp_precision", precision)
+                // TODO: remove when implementing https://github.com/prestosql/presto/issues/5170
+                .setCatalogSessionProperty(catalog, "collect_column_statistics_on_write", "false")
                 .build();
     }
 }

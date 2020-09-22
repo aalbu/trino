@@ -85,6 +85,9 @@ import static io.prestosql.plugin.hive.HiveTestUtils.TYPE_MANAGER;
 import static io.prestosql.plugin.hive.HiveTestUtils.createGenericHiveRecordCursorProvider;
 import static io.prestosql.plugin.hive.HiveTestUtils.getHiveSession;
 import static io.prestosql.plugin.hive.HiveTestUtils.getTypes;
+import static io.prestosql.plugin.hive.HiveTimestampPrecision.MICROSECONDS;
+import static io.prestosql.plugin.hive.HiveTimestampPrecision.MILLISECONDS;
+import static io.prestosql.plugin.hive.HiveTimestampPrecision.NANOSECONDS;
 import static io.prestosql.testing.StructuralTestUtil.rowBlockOf;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
@@ -291,16 +294,15 @@ public class TestHiveFileFormats
     public void testOrc(int rowCount, long fileSizePadding)
             throws Exception
     {
-        // Hive binary writers are broken for timestamps
-        List<TestColumn> testColumns = TEST_COLUMNS.stream()
-                .filter(TestHiveFileFormats::withoutTimestamps)
-                .collect(toImmutableList());
-
-        assertThatFileFormat(ORC)
-                .withColumns(testColumns)
-                .withRowsCount(rowCount)
-                .withFileSizePadding(fileSizePadding)
-                .isReadableByPageSource(new OrcPageSourceFactory(new OrcReaderOptions(), HDFS_ENVIRONMENT, STATS, UTC));
+        for (HiveTimestampPrecision timestampPrecision : List.of(MILLISECONDS, MICROSECONDS, NANOSECONDS)) {
+            ConnectorSession session = getHiveSession(new HiveConfig().setTimestampPrecision(timestampPrecision));
+            assertThatFileFormat(ORC)
+                    .withColumns(TEST_COLUMNS)
+                    .withRowsCount(rowCount)
+                    .withFileSizePadding(fileSizePadding)
+                    .withSession(session)
+                    .isReadableByPageSource(new OrcPageSourceFactory(new OrcReaderOptions(), HDFS_ENVIRONMENT, STATS, UTC));
+        }
     }
 
     @Test(dataProvider = "validRowAndFileSizePadding")

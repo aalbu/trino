@@ -24,16 +24,19 @@ import io.prestosql.spi.block.BlockBuilder;
 import io.prestosql.spi.type.TimestampType;
 import org.joda.time.DateTimeZone;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+
 import static io.airlift.slice.SizeOf.SIZE_OF_INT;
 import static io.prestosql.plugin.base.type.PrestoTimestampEncoderFactory.createTimestampEncoder;
 import static io.prestosql.rcfile.RcFileDecoderUtils.decodeVIntSize;
 import static io.prestosql.rcfile.RcFileDecoderUtils.isNegativeVInt;
 import static io.prestosql.rcfile.RcFileDecoderUtils.readVInt;
 import static io.prestosql.rcfile.RcFileDecoderUtils.writeVInt;
-import static io.prestosql.spi.type.Timestamps.MICROSECONDS_PER_MILLISECOND;
+import static io.prestosql.rcfile.TimestampUtils.getLocalDateTime;
+import static io.prestosql.spi.type.Timestamps.MILLISECONDS_PER_SECOND;
 import static java.lang.Math.floorDiv;
-import static java.lang.Math.floorMod;
-import static java.lang.Math.toIntExact;
 import static java.util.Objects.requireNonNull;
 
 public class TimestampEncoding
@@ -55,7 +58,8 @@ public class TimestampEncoding
     {
         for (int position = 0; position < block.getPositionCount(); position++) {
             if (!block.isNull(position)) {
-                writeTimestamp(output, floorDiv(type.getLong(block, position), MICROSECONDS_PER_MILLISECOND));
+                LocalDateTime localDateTime = getLocalDateTime(type, block, position);
+                writeTimestamp(output, localDateTime);
             }
             encodeOutput.closeEntry();
         }
@@ -64,7 +68,8 @@ public class TimestampEncoding
     @Override
     public void encodeValueInto(Block block, int position, SliceOutput output)
     {
-        writeTimestamp(output, floorDiv(type.getLong(block, position), MICROSECONDS_PER_MILLISECOND));
+        LocalDateTime localDateTime = getLocalDateTime(type, block, position);
+        writeTimestamp(output, localDateTime);
     }
 
     @Override
@@ -176,11 +181,12 @@ public class TimestampEncoding
         return nanos;
     }
 
-    private void writeTimestamp(SliceOutput output, long millis)
+    private void writeTimestamp(SliceOutput output, LocalDateTime localDateTime)
     {
-        millis = timeZone.convertLocalToUTC(millis, false);
-        long seconds = floorDiv(millis, 1000);
-        int nanos = toIntExact(floorMod(millis, 1000) * 1_000_000);
+        Instant instant = localDateTime.toInstant(ZoneOffset.UTC);
+        long millis = timeZone.convertLocalToUTC(instant.toEpochMilli(), false);
+        long seconds = floorDiv(millis, MILLISECONDS_PER_SECOND);
+        int nanos = instant.getNano();
         writeTimestamp(seconds, nanos, output);
     }
 
