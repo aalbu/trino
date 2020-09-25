@@ -102,6 +102,11 @@ public class Timestamps
         return POWERS_OF_TEN[toPrecision - fromPrecision];
     }
 
+    public static int roundDiv(int value, long factor)
+    {
+        return (int) roundDiv((long) value, factor);
+    }
+
     public static long roundDiv(long value, long factor)
     {
         if (value >= 0) {
