@@ -457,11 +457,25 @@ public class TestHiveStorageFormats
         List<TimestampAndPrecision> data = ImmutableList.of(
                 new TimestampAndPrecision(
                         "MILLISECONDS",
+                        "1967-01-02 12:34:56.123",
+                        ImmutableMap.of(
+                                "MILLISECONDS", "1967-01-02 12:34:56.123",
+                                "MICROSECONDS", "1967-01-02 12:34:56.123",
+                                "NANOSECONDS", "1967-01-02 12:34:56.123")),
+                new TimestampAndPrecision(
+                        "MILLISECONDS",
                         "2020-01-02 12:34:56.123",
                         ImmutableMap.of(
                                 "MILLISECONDS", "2020-01-02 12:34:56.123",
                                 "MICROSECONDS", "2020-01-02 12:34:56.123",
                                 "NANOSECONDS", "2020-01-02 12:34:56.123")),
+                new TimestampAndPrecision(
+                        "MILLISECONDS",
+                        "1967-01-02 12:34:56.1234",
+                        ImmutableMap.of(
+                                "MILLISECONDS", "1967-01-02 12:34:56.123",
+                                "MICROSECONDS", "1967-01-02 12:34:56.123",
+                                "NANOSECONDS", "1967-01-02 12:34:56.123")),
                 new TimestampAndPrecision(
                         "MILLISECONDS",
                         "2020-01-02 12:34:56.1234",
@@ -471,11 +485,25 @@ public class TestHiveStorageFormats
                                 "NANOSECONDS", "2020-01-02 12:34:56.123")),
                 new TimestampAndPrecision(
                         "MILLISECONDS",
+                        "1967-01-02 12:34:56.1236",
+                        ImmutableMap.of(
+                                "MILLISECONDS", "1967-01-02 12:34:56.124",
+                                "MICROSECONDS", "1967-01-02 12:34:56.124",
+                                "NANOSECONDS", "1967-01-02 12:34:56.124")),
+                new TimestampAndPrecision(
+                        "MILLISECONDS",
                         "2020-01-02 12:34:56.1236",
                         ImmutableMap.of(
                                 "MILLISECONDS", "2020-01-02 12:34:56.124",
                                 "MICROSECONDS", "2020-01-02 12:34:56.124",
                                 "NANOSECONDS", "2020-01-02 12:34:56.124")),
+                new TimestampAndPrecision(
+                        "MICROSECONDS",
+                        "1967-01-02 12:34:56.123456",
+                        ImmutableMap.of(
+                                "MILLISECONDS", "1967-01-02 12:34:56.123",
+                                "MICROSECONDS", "1967-01-02 12:34:56.123456",
+                                "NANOSECONDS", "1967-01-02 12:34:56.123456")),
                 new TimestampAndPrecision(
                         "MICROSECONDS",
                         "2020-01-02 12:34:56.123456",
@@ -485,6 +513,13 @@ public class TestHiveStorageFormats
                                 "NANOSECONDS", "2020-01-02 12:34:56.123456")),
                 new TimestampAndPrecision(
                         "MICROSECONDS",
+                        "1967-01-02 12:34:56.1234564",
+                        ImmutableMap.of(
+                                "MILLISECONDS", "1967-01-02 12:34:56.123",
+                                "MICROSECONDS", "1967-01-02 12:34:56.123456",
+                                "NANOSECONDS", "1967-01-02 12:34:56.123456")),
+                new TimestampAndPrecision(
+                        "MICROSECONDS",
                         "2020-01-02 12:34:56.1234564",
                         ImmutableMap.of(
                                 "MILLISECONDS", "2020-01-02 12:34:56.123",
@@ -492,11 +527,25 @@ public class TestHiveStorageFormats
                                 "NANOSECONDS", "2020-01-02 12:34:56.123456")),
                 new TimestampAndPrecision(
                         "MICROSECONDS",
+                        "1967-01-02 12:34:56.1234567",
+                        ImmutableMap.of(
+                                "MILLISECONDS", "1967-01-02 12:34:56.123",
+                                "MICROSECONDS", "1967-01-02 12:34:56.123457",
+                                "NANOSECONDS", "1967-01-02 12:34:56.123457")),
+                new TimestampAndPrecision(
+                        "MICROSECONDS",
                         "2020-01-02 12:34:56.1234567",
                         ImmutableMap.of(
                                 "MILLISECONDS", "2020-01-02 12:34:56.123",
                                 "MICROSECONDS", "2020-01-02 12:34:56.123457",
                                 "NANOSECONDS", "2020-01-02 12:34:56.123457")),
+                new TimestampAndPrecision(
+                        "NANOSECONDS",
+                        "1967-01-02 12:34:56.123456789",
+                        ImmutableMap.of(
+                                "MILLISECONDS", "1967-01-02 12:34:56.123",
+                                "MICROSECONDS", "1967-01-02 12:34:56.123457",
+                                "NANOSECONDS", "1967-01-02 12:34:56.123456789")),
                 new TimestampAndPrecision(
                         "NANOSECONDS",
                         "2020-01-02 12:34:56.123456789",
