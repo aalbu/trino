@@ -28,6 +28,7 @@ import io.prestosql.spi.function.OperatorDependency;
 import io.prestosql.spi.function.OutputFunction;
 import io.prestosql.spi.function.SqlType;
 import io.prestosql.spi.function.TypeParameter;
+import io.prestosql.spi.type.LongTimestamp;
 import io.prestosql.spi.type.StandardTypes;
 
 import java.lang.invoke.MethodHandle;
@@ -56,6 +57,16 @@ public final class DefaultApproximateCountDistinctAggregation
             @OperatorDependency(operator = XX_HASH_64, argumentTypes = "T") MethodHandle methodHandle,
             @AggregationState HyperLogLogState state,
             @SqlType("T") long value)
+    {
+        ApproximateCountDistinctAggregation.input(methodHandle, state, value, DEFAULT_STANDARD_ERROR);
+    }
+
+    @InputFunction
+    @TypeParameter("T")
+    public static void input(
+            @OperatorDependency(operator = XX_HASH_64, argumentTypes = "T") MethodHandle methodHandle,
+            @AggregationState HyperLogLogState state,
+            @SqlType("T") LongTimestamp value)
     {
         ApproximateCountDistinctAggregation.input(methodHandle, state, value, DEFAULT_STANDARD_ERROR);
     }
