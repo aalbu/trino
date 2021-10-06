@@ -273,6 +273,7 @@ public final class SqlStageExecution
 
     public synchronized void cancel()
     {
+        Thread.dumpStack();
         stateMachine.transitionToCanceled();
         getAllTasks().forEach(RemoteTask::cancel);
     }
