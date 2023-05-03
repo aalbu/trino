@@ -39,147 +39,147 @@ standaloneRowPattern
     ;
 
 statement
-    : query                                                            #statementDefault
-    | USE schema=identifier                                            #use
-    | USE catalog=identifier '.' schema=identifier                     #use
+    : query                                                                #statementDefault
+    | USE schema=identifier                                                #use
+    | USE catalog=identifier '.' schema=identifier                         #use
     | CREATE CATALOG (IF NOT EXISTS)? catalog=identifier
          USING connectorName=identifier
          (COMMENT string)?
          (AUTHORIZATION principal)?
-         (WITH properties)?                                            #createCatalog
+         (WITH properties)?                                                #createCatalog
     | DROP CATALOG (IF EXISTS)? catalog=identifier
-         (CASCADE | RESTRICT)?                                         #dropCatalog
+         (CASCADE | RESTRICT)?                                             #dropCatalog
     | CREATE SCHEMA (IF NOT EXISTS)? qualifiedName
         (AUTHORIZATION principal)?
-        (WITH properties)?                                             #createSchema
-    | DROP SCHEMA (IF EXISTS)? qualifiedName (CASCADE | RESTRICT)?     #dropSchema
-    | ALTER SCHEMA qualifiedName RENAME TO identifier                  #renameSchema
-    | ALTER SCHEMA qualifiedName SET AUTHORIZATION principal           #setSchemaAuthorization
+        (WITH properties)?                                                 #createSchema
+    | DROP SCHEMA (IF EXISTS)? qualifiedName (CASCADE | RESTRICT)?         #dropSchema
+    | ALTER SCHEMA qualifiedName RENAME TO identifier                      #renameSchema
+    | ALTER SCHEMA qualifiedName SET AUTHORIZATION principal               #setSchemaAuthorization
     | CREATE TABLE (IF NOT EXISTS)? qualifiedName columnAliases?
         (COMMENT string)?
         (WITH properties)? AS (query | '('query')')
-        (WITH (NO)? DATA)?                                             #createTableAsSelect
+        (WITH (NO)? DATA)?                                                 #createTableAsSelect
     | CREATE TABLE (IF NOT EXISTS)? qualifiedName
         '(' tableElement (',' tableElement)* ')'
          (COMMENT string)?
-         (WITH properties)?                                            #createTable
-    | DROP TABLE (IF EXISTS)? qualifiedName                            #dropTable
-    | INSERT INTO qualifiedName columnAliases? query                   #insertInto
-    | DELETE FROM qualifiedName (WHERE booleanExpression)?             #delete
-    | TRUNCATE TABLE qualifiedName                                     #truncateTable
-    | COMMENT ON TABLE qualifiedName IS (string | NULL)                #commentTable
-    | COMMENT ON VIEW qualifiedName IS (string | NULL)                 #commentView
-    | COMMENT ON COLUMN qualifiedName IS (string | NULL)               #commentColumn
+         (WITH properties)?                                                #createTable
+    | DROP TABLE (IF EXISTS)? qualifiedName                                #dropTable
+    | INSERT INTO qualifiedName columnAliases? query                       #insertInto
+    | DELETE FROM qualifiedName (WHERE booleanExpression)?                 #delete
+    | TRUNCATE TABLE qualifiedName                                         #truncateTable
+    | COMMENT ON TABLE qualifiedName IS (string | NULL)                    #commentTable
+    | COMMENT ON VIEW qualifiedName IS (string | NULL)                     #commentView
+    | COMMENT ON COLUMN qualifiedName IS (string | NULL)                   #commentColumn
     | ALTER TABLE (IF EXISTS)? from=qualifiedName
-        RENAME TO to=qualifiedName                                     #renameTable
+        RENAME TO to=qualifiedName                                         #renameTable
     | ALTER TABLE (IF EXISTS)? tableName=qualifiedName
-        ADD COLUMN (IF NOT EXISTS)? column=columnDefinition            #addColumn
+        ADD COLUMN (IF NOT EXISTS)? column=columnDefinition                #addColumn
     | ALTER TABLE (IF EXISTS)? tableName=qualifiedName
-        RENAME COLUMN (IF EXISTS)? from=identifier TO to=identifier    #renameColumn
+        RENAME COLUMN (IF EXISTS)? from=identifier TO to=identifier        #renameColumn
     | ALTER TABLE (IF EXISTS)? tableName=qualifiedName
-        DROP COLUMN (IF EXISTS)? column=qualifiedName                  #dropColumn
+        DROP COLUMN (IF EXISTS)? column=qualifiedName                      #dropColumn
     | ALTER TABLE (IF EXISTS)? tableName=qualifiedName
-        ALTER COLUMN columnName=identifier SET DATA TYPE type          #setColumnType
-    | ALTER TABLE tableName=qualifiedName SET AUTHORIZATION principal  #setTableAuthorization
+        ALTER COLUMN columnName=identifier SET DATA TYPE type              #setColumnType
+    | ALTER TABLE tableName=qualifiedName SET AUTHORIZATION principal      #setTableAuthorization
     | ALTER TABLE tableName=qualifiedName
-        SET PROPERTIES propertyAssignments                             #setTableProperties
+        SET PROPERTIES propertyAssignments                                 #setTableProperties
     | ALTER TABLE tableName=qualifiedName
         EXECUTE procedureName=identifier
         ('(' (callArgument (',' callArgument)*)? ')')?
-        (WHERE where=booleanExpression)?                               #tableExecute
-    | ANALYZE qualifiedName (WITH properties)?                         #analyze
+        (WHERE where=booleanExpression)?                                   #tableExecute
+    | ANALYZE qualifiedName (WITH properties)?                             #analyze
     | CREATE (OR REPLACE)? MATERIALIZED VIEW
         (IF NOT EXISTS)? qualifiedName
         (GRACE PERIOD interval)?
         (COMMENT string)?
-        (WITH properties)? AS query                                    #createMaterializedView
+        (WITH properties)? AS query                                        #createMaterializedView
     | CREATE (OR REPLACE)? VIEW qualifiedName
         (COMMENT string)?
-        (SECURITY (DEFINER | INVOKER))? AS query                       #createView
-    | REFRESH MATERIALIZED VIEW qualifiedName                          #refreshMaterializedView
-    | DROP MATERIALIZED VIEW (IF EXISTS)? qualifiedName                #dropMaterializedView
+        (SECURITY (DEFINER | INVOKER))? AS query                           #createView
+    | REFRESH MATERIALIZED VIEW qualifiedName                              #refreshMaterializedView
+    | DROP MATERIALIZED VIEW (IF EXISTS)? qualifiedName                    #dropMaterializedView
     | ALTER MATERIALIZED VIEW (IF EXISTS)? from=qualifiedName
-        RENAME TO to=qualifiedName                                     #renameMaterializedView
+        RENAME TO to=qualifiedName                                         #renameMaterializedView
     | ALTER MATERIALIZED VIEW qualifiedName
-        SET PROPERTIES propertyAssignments                             #setMaterializedViewProperties
-    | DROP VIEW (IF EXISTS)? qualifiedName                             #dropView
-    | ALTER VIEW from=qualifiedName RENAME TO to=qualifiedName         #renameView
-    | ALTER VIEW from=qualifiedName SET AUTHORIZATION principal        #setViewAuthorization
-    | CALL qualifiedName '(' (callArgument (',' callArgument)*)? ')'   #call
+        SET PROPERTIES propertyAssignments                                 #setMaterializedViewProperties
+    | DROP VIEW (IF EXISTS)? qualifiedName                                 #dropView
+    | ALTER VIEW from=qualifiedName RENAME TO to=qualifiedName             #renameView
+    | ALTER VIEW from=qualifiedName SET AUTHORIZATION principal            #setViewAuthorization
+    | CALL qualifiedName '(' (callArgument (',' callArgument)*)? ')'       #call
     | CREATE ROLE name=identifier
         (WITH ADMIN grantor)?
-        (IN catalog=identifier)?                                       #createRole
-    | DROP ROLE name=identifier (IN catalog=identifier)?               #dropRole
+        (IN catalog=identifier)?                                           #createRole
+    | DROP ROLE name=identifier (IN catalog=identifier)?                   #dropRole
     | GRANT
         roles
         TO principal (',' principal)*
         (WITH ADMIN OPTION)?
         (GRANTED BY grantor)?
-        (IN catalog=identifier)?                                       #grantRoles
+        (IN catalog=identifier)?                                           #grantRoles
     | REVOKE
         (ADMIN OPTION FOR)?
         roles
         FROM principal (',' principal)*
         (GRANTED BY grantor)?
-        (IN catalog=identifier)?                                       #revokeRoles
+        (IN catalog=identifier)?                                           #revokeRoles
     | SET ROLE (ALL | NONE | role=identifier)
-        (IN catalog=identifier)?                                       #setRole
+        (IN catalog=identifier)?                                           #setRole
     | GRANT
         (privilege (',' privilege)* | ALL PRIVILEGES)
         ON (SCHEMA | TABLE)? qualifiedName
         TO grantee=principal
-        (WITH GRANT OPTION)?                                           #grant
+        (WITH GRANT OPTION)?                                               #grant
     | DENY
         (privilege (',' privilege)* | ALL PRIVILEGES)
         ON (SCHEMA | TABLE)? qualifiedName
-        TO grantee=principal                                           #deny
+        TO grantee=principal                                               #deny
     | REVOKE
         (GRANT OPTION FOR)?
         (privilege (',' privilege)* | ALL PRIVILEGES)
         ON (SCHEMA | TABLE)? qualifiedName
-        FROM grantee=principal                                         #revoke
-    | SHOW GRANTS (ON TABLE? qualifiedName)?                           #showGrants
-    | EXPLAIN ('(' explainOption (',' explainOption)* ')')? statement  #explain
-    | EXPLAIN ANALYZE VERBOSE? statement                               #explainAnalyze
-    | SHOW CREATE TABLE qualifiedName                                  #showCreateTable
-    | SHOW CREATE SCHEMA qualifiedName                                 #showCreateSchema
-    | SHOW CREATE VIEW qualifiedName                                   #showCreateView
-    | SHOW CREATE MATERIALIZED VIEW qualifiedName                      #showCreateMaterializedView
+        FROM grantee=principal                                             #revoke
+    | SHOW GRANTS (ON TABLE? qualifiedName)?                               #showGrants
+    | EXPLAIN ('(' explainOption (',' explainOption)* ')')? statement      #explain
+    | EXPLAIN ANALYZE VERBOSE? statement                                   #explainAnalyze
+    | SHOW CREATE TABLE qualifiedName                                      #showCreateTable
+    | SHOW CREATE SCHEMA qualifiedName                                     #showCreateSchema
+    | SHOW CREATE VIEW qualifiedName                                       #showCreateView
+    | SHOW CREATE MATERIALIZED VIEW qualifiedName                          #showCreateMaterializedView
     | SHOW TABLES ((FROM | IN) qualifiedName)?
-        (LIKE pattern=string (ESCAPE escape=string)?)?                 #showTables
+        (LIKE pattern=string (ESCAPE escape=string)?)?                     #showTables
     | SHOW SCHEMAS ((FROM | IN) identifier)?
-        (LIKE pattern=string (ESCAPE escape=string)?)?                 #showSchemas
+        (LIKE pattern=string (ESCAPE escape=string)?)?                     #showSchemas
     | SHOW CATALOGS
-        (LIKE pattern=string (ESCAPE escape=string)?)?                 #showCatalogs
+        (LIKE pattern=string (ESCAPE escape=string)?)?                     #showCatalogs
     | SHOW COLUMNS (FROM | IN) qualifiedName?
-        (LIKE pattern=string (ESCAPE escape=string)?)?                 #showColumns
-    | SHOW STATS FOR qualifiedName                                     #showStats
-    | SHOW STATS FOR '(' query ')'                                     #showStatsForQuery
-    | SHOW CURRENT? ROLES ((FROM | IN) identifier)?                    #showRoles
-    | SHOW ROLE GRANTS ((FROM | IN) identifier)?                       #showRoleGrants
-    | DESCRIBE qualifiedName                                           #showColumns
-    | DESC qualifiedName                                               #showColumns
+        (LIKE pattern=string (ESCAPE escape=string)?)?                     #showColumns
+    | SHOW STATS FOR qualifiedName                                         #showStats
+    | SHOW STATS FOR '(' query ')'                                         #showStatsForQuery
+    | SHOW CURRENT? ROLES ((FROM | IN) identifier)?                        #showRoles
+    | SHOW ROLE GRANTS ((FROM | IN) identifier)?                           #showRoleGrants
+    | DESCRIBE qualifiedName                                               #showColumns
+    | DESC qualifiedName                                                   #showColumns
     | SHOW FUNCTIONS
-        (LIKE pattern=string (ESCAPE escape=string)?)?                 #showFunctions
+        (LIKE pattern=string (ESCAPE escape=string)?)?                     #showFunctions
     | SHOW SESSION
-        (LIKE pattern=string (ESCAPE escape=string)?)?                 #showSession
-    | SET SESSION qualifiedName EQ expression                          #setSession
-    | RESET SESSION qualifiedName                                      #resetSession
-    | START TRANSACTION (transactionMode (',' transactionMode)*)?      #startTransaction
-    | COMMIT WORK?                                                     #commit
-    | ROLLBACK WORK?                                                   #rollback
-    | PREPARE identifier FROM statement                                #prepare
-    | DEALLOCATE PREPARE identifier                                    #deallocate
-    | EXECUTE identifier (USING expression (',' expression)*)?         #execute
-    | DESCRIBE INPUT identifier                                        #describeInput
-    | DESCRIBE OUTPUT identifier                                       #describeOutput
-    | SET PATH pathSpecification                                       #setPath
-    | SET TIME ZONE (LOCAL | expression)                               #setTimeZone
+        (LIKE pattern=string (ESCAPE escape=string)?)?                     #showSession
+    | SET SESSION qualifiedName EQ expression                              #setSession
+    | RESET SESSION qualifiedName                                          #resetSession
+    | START TRANSACTION (transactionMode (',' transactionMode)*)?          #startTransaction
+    | COMMIT WORK?                                                         #commit
+    | ROLLBACK WORK?                                                       #rollback
+    | PREPARE identifier FROM statement                                    #prepare
+    | DEALLOCATE PREPARE identifier                                        #deallocate
+    | EXECUTE identifier (USING expression (',' expression)*)?             #execute
+    | DESCRIBE INPUT identifier                                            #describeInput
+    | DESCRIBE OUTPUT identifier                                           #describeOutput
+    | SET PATH pathSpecification                                           #setPath
+    | SET TIME ZONE (LOCAL | expression)                                   #setTimeZone
     | UPDATE qualifiedName
         SET updateAssignment (',' updateAssignment)*
-        (WHERE where=booleanExpression)?                               #update
+        (WHERE where=booleanExpression)?                                   #update
     | MERGE INTO qualifiedName (AS? identifier)?
-        USING relation ON expression mergeCase+                        #merge
+        USING relation ON expression mergeCase+                            #merge
     ;
 
 query
