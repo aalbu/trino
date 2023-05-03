@@ -171,6 +171,7 @@ statement
     | PREPARE identifier FROM statement                                    #prepare
     | DEALLOCATE PREPARE identifier                                        #deallocate
     | EXECUTE identifier (USING expression (',' expression)*)?             #execute
+    | EXECUTE IMMEDIATE statement (USING expression (',' expression)*)?    #executeImmediate
     | DESCRIBE INPUT identifier                                            #describeInput
     | DESCRIBE OUTPUT identifier                                           #describeOutput
     | SET PATH pathSpecification                                           #setPath
@@ -962,6 +963,7 @@ HAVING: 'HAVING';
 HOUR: 'HOUR';
 IF: 'IF';
 IGNORE: 'IGNORE';
+IMMEDIATE: 'IMMEDIATE';
 IN: 'IN';
 INCLUDING: 'INCLUDING';
 INITIAL: 'INITIAL';

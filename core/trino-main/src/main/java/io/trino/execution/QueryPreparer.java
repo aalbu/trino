@@ -20,6 +20,7 @@ import io.trino.spi.resourcegroups.QueryType;
 import io.trino.sql.parser.ParsingException;
 import io.trino.sql.parser.SqlParser;
 import io.trino.sql.tree.Execute;
+import io.trino.sql.tree.ExecuteImmediate;
 import io.trino.sql.tree.ExplainAnalyze;
 import io.trino.sql.tree.Expression;
 import io.trino.sql.tree.Statement;
@@ -65,6 +66,9 @@ public class QueryPreparer
             prepareSql = Optional.of(session.getPreparedStatementFromExecute(executeStatement));
             statement = sqlParser.createStatement(prepareSql.get(), createParsingOptions(session));
         }
+        if (statement instanceof ExecuteImmediate executeImmediateStatement) {
+            statement = executeImmediateStatement.getStatement();
+        }
 
         if (statement instanceof ExplainAnalyze explainAnalyzeStatement) {
             Statement innerStatement = explainAnalyzeStatement.getStatement();
@@ -76,6 +80,9 @@ public class QueryPreparer
         List<Expression> parameters = ImmutableList.of();
         if (wrappedStatement instanceof Execute executeStatement) {
             parameters = executeStatement.getParameters();
+        }
+        if (wrappedStatement instanceof ExecuteImmediate executeImmediateStatement) {
+            parameters = executeImmediateStatement.getParameters();
         }
         validateParameters(statement, parameters);
         return new PreparedQuery(statement, parameters, prepareSql);

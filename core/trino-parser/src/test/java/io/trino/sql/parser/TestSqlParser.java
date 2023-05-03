@@ -66,6 +66,7 @@ import io.trino.sql.tree.DropView;
 import io.trino.sql.tree.EmptyPattern;
 import io.trino.sql.tree.EmptyTableTreatment;
 import io.trino.sql.tree.Execute;
+import io.trino.sql.tree.ExecuteImmediate;
 import io.trino.sql.tree.ExistsPredicate;
 import io.trino.sql.tree.Explain;
 import io.trino.sql.tree.ExplainAnalyze;
@@ -3159,6 +3160,36 @@ public class TestSqlParser
     {
         assertStatement("EXECUTE myquery USING 1, 'abc', ARRAY ['hello']",
                 new Execute(identifier("myquery"), ImmutableList.of(new LongLiteral("1"), new StringLiteral("abc"), new Array(ImmutableList.of(new StringLiteral("hello"))))));
+    }
+
+    @Test
+    public void testExecuteImmediate()
+    {
+        assertStatement(
+                "EXECUTE IMMEDIATE SELECT * FROM foo",
+                new ExecuteImmediate(
+                        simpleQuery(selectList(new AllColumns()), table(QualifiedName.of("foo"))),
+                        emptyList()));
+    }
+
+    @Test
+    public void testExecuteImmediateWithUsing()
+    {
+        assertStatement(
+                "EXECUTE IMMEDIATE SELECT ?, ? FROM foo USING 'foo', 42",
+                new ExecuteImmediate(
+                        simpleQuery(selectList(new Parameter(0), new Parameter(1)), table(QualifiedName.of("foo"))),
+                        ImmutableList.of(new StringLiteral("foo"), new LongLiteral("42"))));
+    }
+
+    @Test
+    public void testExecuteImmediateCreateCatalogUsing()
+    {
+        assertStatement(
+                "EXECUTE IMMEDIATE CREATE CATALOG test USING conn",
+                new ExecuteImmediate(
+                        new CreateCatalog(new Identifier("test"), false, new Identifier("conn"), ImmutableList.of(), Optional.empty(), Optional.empty()),
+                        emptyList()));
     }
 
     @Test
